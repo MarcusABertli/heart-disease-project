@@ -8,14 +8,18 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 import joblib
 
 def train_model():
-    print("Loading dataset...")
-    df = pd.read_csv('data.csv', na_values='?')
-
+    print("Loading dataset from UCI ML Repo...")
+    from ucimlrepo import fetch_ucirepo
+    heart_disease = fetch_ucirepo(id=45)
+    
+    X = heart_disease.data.features
+    y = heart_disease.data.targets
+    
     # Impute missing values with median for all columns
-    df = df.fillna(df.median())
-
-    X = df.drop('num', axis=1)
-    y = (df['num'] > 0).astype(int)
+    X = X.fillna(X.median())
+    
+    # Binarize target
+    y = (y['num'] > 0).astype(int)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     scaler = StandardScaler()
