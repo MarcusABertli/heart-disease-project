@@ -1,14 +1,10 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
-import streamlit as st
-
 
 load_dotenv()
-try:
-    API_KEY = st.secrets["GOOGLE_API_KEY"]
-except:
-    API_KEY = os.getenv("GOOGLE_API_KEY")
+
+API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if API_KEY:
     genai.configure(api_key=API_KEY)
@@ -52,10 +48,7 @@ def get_health_chatbot_response(query, patient_context=None):
         prob = patient_context.get("probability", 0)
         features = patient_context.get("features", {})
         context_str = f"""
-    The patient's current data and prediction results are:
-    - Clinical Parameters: {features}
-    - Prediction: {risk_level}
-    - Heart Disease Probability: {prob:.2%}
+    The patient's current data and prediction results are:{features}{risk_level}{prob:.2%}
     Use this context to give a personalized response.
     """
     prompt = f"""You are a medical AI assistant in a heart disease risk prediction app.
