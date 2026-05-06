@@ -5,14 +5,17 @@ import streamlit as st
 
 load_dotenv()
 
-API_KEY = os.getenv("GOOGLE_API_KEY")
+try:
+    API_KEY = st.secrets["GOOGLE_API_KEY"]
+except Exception:
+    API_KEY = None
 
 if API_KEY:
     genai.configure(api_key=API_KEY)
     model = genai.GenerativeModel('gemini-flash-latest')
 else:
     try:
-        API_KEY = st.secrets("GOOGLE_API_KEY")
+        API_KEY = os.getenv("GOOGLE_API_KEY")
         genai.configure(api_key=API_KEY)
         model = genai.GenerativeModel('gemini-flash-latest')
     except Exception:
