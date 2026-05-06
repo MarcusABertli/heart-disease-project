@@ -5,8 +5,10 @@ import streamlit as st
 
 
 load_dotenv()
-
-API_KEY = st.secrets["GOOGLE_API_KEY"]
+try:
+    API_KEY = st.secrets["GOOGLE_API_KEY"]
+except:
+    API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if API_KEY:
     genai.configure(api_key=API_KEY)
