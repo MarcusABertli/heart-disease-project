@@ -1,12 +1,17 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+import streamlit as st
 
 load_dotenv()
 
 API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if API_KEY:
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel('gemini-flash-latest')
+elif API_KEY is None:
+    API_KEY = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=API_KEY)
     model = genai.GenerativeModel('gemini-flash-latest')
 else:
