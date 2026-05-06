@@ -10,12 +10,13 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
     model = genai.GenerativeModel('gemini-flash-latest')
-elif API_KEY is None:
-    API_KEY = st.secrets["GOOGLE_API_KEY"]
-    genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-flash-latest')
 else:
-    model = None
+    try:
+        API_KEY = st.secrets["GOOGLE_API_KEY"]
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel('gemini-flash-latest')
+    except Exception:
+        model = None
 
 import time
 from google.api_core import exceptions
