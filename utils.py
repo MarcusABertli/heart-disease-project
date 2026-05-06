@@ -12,7 +12,7 @@ if API_KEY:
     model = genai.GenerativeModel('gemini-flash-latest')
 else:
     try:
-        API_KEY = st.secrets["GOOGLE_API_KEY"]
+        API_KEY = st.secrets("GOOGLE_API_KEY")
         genai.configure(api_key=API_KEY)
         model = genai.GenerativeModel('gemini-flash-latest')
     except Exception:
