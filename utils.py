@@ -58,5 +58,5 @@ def get_health_chatbot_response(query, patient_context=None):
     prompt = f"""You are a medical AI assistant in a heart disease risk prediction app.
     {context_str}
     The user asks: {query}
-    Provide a clear, helpful, and personalized response based on the patient's data if available."""
+    Provide a clear, helpful, patient's data if available."""
     return generate_with_retry(prompt)
