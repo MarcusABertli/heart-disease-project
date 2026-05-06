@@ -6,14 +6,19 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from utils import get_prediction_explanation, get_health_chatbot_response
+
+@st.cache_data(show_spinner=False)
+def fetch_explanation(input_dict, pred, prob):
+    return get_prediction_explanation(input_dict, pred, prob)
+
+@st.cache_data(show_spinner=False)
+def fetch_chatbot_response(query, patient_context=None):
+    return get_health_chatbot_response(query, patient_context)
+
 st.set_page_config(page_title="Heart Disease Risk Prediction System", layout="wide")
 st.markdown("""
 <style>
-.stApp {
-    background-color: #f5f7f9;
-}
 .main-title {
-    color: #2c3e50;
     text-align: center;
     font-size: 3rem;
     padding: 1rem;
@@ -65,41 +70,99 @@ if st.button("🚀 Predict Heart Disease Risk"):
     if not os.path.exists('model.pkl'):
         st.error("❌ Model file 'model.pkl' not found. Please run 'python train_model.py' first.")
     else:
-        model_data = joblib.load('model.pkl')
-        model = model_data['model']
-        scaler = model_data['scaler']
-        features = model_data['features']
-        input_data = input_df[features]
-        input_scaled = scaler.transform(input_data)
-        prediction = model.predict(input_scaled)[0]
-        probability = model.predict_proba(input_scaled)[0][1]
-        st.subheader("🔮 Prediction Result")
-        risk_class = "high-risk" if prediction == 1 else "low-risk"
-        risk_label = "HIGH RISK" if prediction == 1 else "LOW RISK"
-        
-        st.markdown(f"""
-        <div class="prediction-box {risk_class}">
-            <h2 style="margin:0;">Risk Level: {risk_label}</h2>
-            <p style="margin:0; font-size:1.2rem;">Heart Disease Probability: {probability:.2%}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.subheader("💡 AI Explanation & Recommendations")
-        with st.spinner("Generating AI explanation..."):
-            explanation = get_prediction_explanation(input_df.to_dict('records')[0], prediction, probability)
-            st.write(explanation)
-        st.subheader("📈 Top Contributing Factors")
-        importances = model.feature_importances_
-        indices = np.argsort(importances)[::-1]
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(x=importances[indices], y=np.array(features)[indices], ax=ax, palette="viridis")
-        ax.set_title("Feature Importance Influencing Prediction")
-        st.pyplot(fig)
+        with st.spinner("Analyzing data and generating AI explanation..."):
+            model_data = joblib.load('model.pkl')
+            model = model_data['model']
+            features = model_data['features']
+
+            input_fe = input_df.copy()
+            input_fe['heart_rate_reserve'] = input_fe['thalach'] / (220 - input_fe['age'])
+            input_fe['age_thalach_ratio'] = input_fe['age'] / (input_fe['thalach'] + 1)
+            input_fe['oldpeak_slope'] = input_fe['oldpeak'] * input_fe['slope']
+            input_fe['cp_exang'] = input_fe['cp'] * input_fe['exang']
+            input_fe['age_binned'] = pd.cut(input_fe['age'], bins=[0, 40, 55, 100], labels=[0, 1, 2]).astype(int)
+            input_fe['trestbps_high'] = (input_fe['trestbps'] > 140).astype(int)
+
+            input_data = input_fe[features]
+            
+            if 'scaler' in model_data and model_data['scaler'] is not None:
+                scaler = model_data['scaler']
+                input_processed = scaler.transform(input_data)
+            else:
+                input_processed = input_data
+                
+            prediction = model.predict(input_processed)[0]
+            probability = model.predict_proba(input_processed)[0][1]
+            
+            st.session_state['prediction'] = prediction
+            st.session_state['probability'] = probability
+            
+            explanation = fetch_explanation(input_df.to_dict('records')[0], prediction, probability)
+            st.session_state['explanation'] = explanation
+            
+            original_features = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs',
+                                 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+            importances = model.feature_importances_
+            feat_imp = pd.DataFrame({'Feature': features, 'Importance': importances})
+            feat_imp = feat_imp[feat_imp['Feature'].isin(original_features)]
+            feat_imp = feat_imp.sort_values('Importance', ascending=False)
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.barplot(x='Importance', y='Feature', data=feat_imp, ax=ax, palette="viridis")
+            ax.set_title("Feature Importance Influencing Prediction")
+            st.session_state['fig'] = fig
+
+if 'prediction' in st.session_state:
+    prediction = st.session_state['prediction']
+    probability = st.session_state['probability']
+    explanation = st.session_state['explanation']
+    fig = st.session_state['fig']
+    
+    st.subheader("🔮 Prediction Result")
+    risk_class = "high-risk" if prediction == 1 else "low-risk"
+    risk_label = "HIGH RISK" if prediction == 1 else "LOW RISK"
+    
+    st.markdown(f"""
+    <div class="prediction-box {risk_class}">
+        <h2 style="margin:0;">Risk Level: {risk_label}</h2>
+        <p style="margin:0; font-size:1.2rem;">Heart Disease Probability: {probability:.2%}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.subheader("💡 AI Explanation & Recommendations")
+    st.write(explanation)
+    
+    st.subheader("📈 Top Contributing Factors")
+    st.pyplot(fig)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("💬 Ask a Heart Health Question")
-user_query = st.sidebar.text_input("Example: How to lower cholesterol?")
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+chat_container = st.sidebar.container()
+
+for msg in st.session_state.chat_history:
+    with chat_container.chat_message(msg["role"]):
+        st.write(msg["content"])
+
+user_query = st.sidebar.chat_input("e.g. Lower cholesterol?")
+
 if user_query:
-    with st.spinner("AI Chatbot thinking..."):
-        response = get_health_chatbot_response(user_query)
-        st.sidebar.write(response)
+    with chat_container.chat_message("user"):
+        st.write(user_query)
+    st.session_state.chat_history.append({"role": "user", "content": user_query})
+    patient_context = None
+    if 'prediction' in st.session_state:
+        patient_context = {
+            "prediction": st.session_state['prediction'],
+            "probability": st.session_state['probability'],
+            "features": input_df.to_dict('records')[0]
+        }
+    
+    with chat_container.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = fetch_chatbot_response(user_query, patient_context)
+            st.write(response)
+    st.session_state.chat_history.append({"role": "assistant", "content": response})
