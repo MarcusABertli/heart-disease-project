@@ -12,7 +12,7 @@ In addition to traditional ML predictions, this application leverages Google's *
 
 - **Clinical Data Input:** Sidebar forms for users to input 13 critical clinical parameters (Age, Sex, Chest Pain Type, Resting BP, Cholesterol, etc.).
 - **Machine Learning Prediction:** Uses a Random Forest Classifier trained on clinical data to provide a rapid risk assessment (High Risk vs. Low Risk) and exact probability percentage.
-- **AI-Generated Explanations:** Utilizes Google's `gemini-2.0-flash` model to analyze the user's data and the model's prediction to provide personalized context, highlighting which health factors contributed most to the assessment.
+- **AI-Generated Explanations:** Utilizes Google's `gemini` model to analyze the user's data and the model's prediction to provide personalized context, highlighting which health factors contributed most to the assessment.
 - **Feature Importance Visualization:** Displays a bar chart ranking the most critical clinical features influencing the prediction.
 - **Interactive Health Chatbot:** A built-in sidebar chatbot capable of answering general heart-health queries (e.g., "How to lower cholesterol?").
 
