@@ -42,7 +42,7 @@ def get_prediction_explanation(features_dict, prediction, probability):
         risk_level = "Medium Risk"
     else:
         risk_level = "Low Risk"
-    prompt = f"""You are a medical AI assistant in a heart disease risk prediction system. A simple explanation of what this result means{features_dict}{risk_level}{probability:.2%}"""
+    prompt = f"""You are a medical AI assistant give simple explanation of what this result means{features_dict}{risk_level}{probability:.2%}"""
     return generate_with_retry(prompt)
 
 def get_health_chatbot_response(query, patient_context=None):
@@ -56,6 +56,6 @@ def get_health_chatbot_response(query, patient_context=None):
         else:
             risk_level = "Low Risk"
         features = patient_context.get("features", {})
-        context_str = f"""The patient's current data are:{features}{risk_level}{prob:.2%}"""
-    prompt = f"""You are a medical AI assistant in a heart disease risk prediction app.{context_str}{query}Provide a clear, helpful response."""
+        context_str = f"""{features}{risk_level}{prob:.2%}"""
+    prompt = f"""{context_str}{query}Provide a clear, helpful response."""
     return generate_with_retry(prompt)
