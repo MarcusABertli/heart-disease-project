@@ -12,7 +12,7 @@ except:
 
 if API_KEY:
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-flash-latest')
+    model = genai.GenerativeModel('gemini-flash-lite-latest')
 else:
     model = None
 
@@ -36,27 +36,26 @@ def generate_with_retry(prompt):
             return f"Error generating content: {str(e)}"
 
 def get_prediction_explanation(features_dict, prediction, probability):
-    risk_level = "High Risk" if prediction == 1 else "Low Risk"
-    prompt = f"""
-    You are a medical AI assistant in a heart disease risk prediction system. A simple explanation of what this result means
-    {features_dict}
-    {risk_level} 
-    {probability:.2%}
-    """
+    if probability >= 0.7:
+        risk_level = "High Risk"
+    elif probability >= 0.4:
+        risk_level = "Medium Risk"
+    else:
+        risk_level = "Low Risk"
+    prompt = f"""You are a medical AI assistant in a heart disease risk prediction system. A simple explanation of what this result means{features_dict}{risk_level}{probability:.2%}"""
     return generate_with_retry(prompt)
 
 def get_health_chatbot_response(query, patient_context=None):
     context_str = ""
     if patient_context:
-        risk_level = "High Risk" if patient_context.get("prediction") == 1 else "Low Risk"
         prob = patient_context.get("probability", 0)
+        if prob >= 0.7:
+            risk_level = "High Risk"
+        elif prob >= 0.4:
+            risk_level = "Medium Risk"
+        else:
+            risk_level = "Low Risk"
         features = patient_context.get("features", {})
-        context_str = f"""
-    The patient's current data and prediction results are:{features}{risk_level}{prob:.2%}
-    Use this context to give a personalized response.
-    """
-    prompt = f"""You are a medical AI assistant in a heart disease risk prediction app.
-    {context_str}
-    The user asks: {query}
-    Provide a clear, helpful, patient's data if available."""
+        context_str = f"""The patient's current data are:{features}{risk_level}{prob:.2%}"""
+    prompt = f"""You are a medical AI assistant in a heart disease risk prediction app.{context_str}{query}Provide a clear, helpful response."""
     return generate_with_retry(prompt)

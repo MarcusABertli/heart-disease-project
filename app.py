@@ -30,6 +30,7 @@ st.markdown("""
     color: white;
 }
 .low-risk { background-color: #27ae60; }
+.medium-risk { background-color: #f39c12; }
 .high-risk { background-color: #c0392b; }
 </style>
 """, unsafe_allow_html=True)
@@ -119,8 +120,15 @@ if 'prediction' in st.session_state:
     fig = st.session_state['fig']
     
     st.subheader("🔮 Prediction Result")
-    risk_class = "high-risk" if prediction == 1 else "low-risk"
-    risk_label = "HIGH RISK" if prediction == 1 else "LOW RISK"
+    if probability >= 0.7:
+        risk_class = "high-risk"
+        risk_label = "HIGH RISK"
+    elif probability >= 0.4:
+        risk_class = "medium-risk"
+        risk_label = "MEDIUM RISK"
+    else:
+        risk_class = "low-risk"
+        risk_label = "LOW RISK"
     
     st.markdown(f"""
     <div class="prediction-box {risk_class}">
