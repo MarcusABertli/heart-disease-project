@@ -111,9 +111,12 @@ The following features are collected in the sidebar and utilized for inference:
 13. **Thal (thal):** Thalassemia status (Normal, Fixed defect, Reversible defect).
 
 ### 🛠️ Engineered Features
-*   `heart_rate_reserve`: $\text{thalach} / (220 - \text{age})$
-*   `age_thalach_ratio`: $\text{age} / (\text{thalach} + 1)$
-*   `oldpeak_slope`: $\text{oldpeak} \times \text{slope}$
-*   `cp_exang`: $\text{cp} \times \text{exang}$
-*   `age_binned`: Binned age category index (Under 40, 40-55, Over 55)
-*   `trestbps_high`: Indicator if Resting Blood Pressure exceeds 140 mm Hg
+
+| Feature | Formula | What it means |
+|---|---|---|
+| `heart_rate_reserve` | `thalach / (220 - age)` | Max heart rate as a fraction of age-predicted max |
+| `age_thalach_ratio` | `age / (thalach + 1)` | Age relative to max heart rate |
+| `oldpeak_slope` | `oldpeak * slope` | ST depression combined with ST slope |
+| `cp_exang` | `cp * exang` | Chest pain type combined with exercise angina |
+| `age_binned` | `0 = Under 40, 1 = 40–55, 2 = Over 55` | Age group index |
+| `trestbps_high` | `1 if trestbps > 140, else 0` | High resting blood pressure flag |
